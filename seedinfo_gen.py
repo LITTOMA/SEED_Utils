@@ -27,11 +27,31 @@ def GetIDandSEED(filename):
                 savedata = savedata[seedoffset:]
     return tids,seeds
 
+def ReadSeedBin(path):
+    with open(path,'rb')as seedbin:
+        if not seedbin.read(4)=='SEED':
+            return False
+        titlecount = struct.unpack('I',seedbin.read(4))[0]
+        titleids = []
+        seeds = []
+        for i in range(titlecount):
+            titleids.append(seedbin.read(8))
+        for i in range(titlecount):
+            seeds.append(seedbin.read(16))
+        return titleids,seeds
+
 def reverseByteArray(bytearr):
     outarr = ''
     for i in range(0, bytearr.__len__())[::-1]:
         outarr += bytearr[i]
     return outarr
+
+def setArray(array):
+    result = []
+    for value in array:
+        if not value in result:
+            result.append(value)
+    return result
 
 if __name__ == '__main__':
     tids = []
@@ -56,6 +76,14 @@ if __name__ == '__main__':
         sys.exit()
 
     outpath = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), 'seedinfo.bin')
+
+    if os.path.exists(outpath):
+        titleid,seed = ReadSeedBin(outpath)
+        tids += titleid
+        seeds += seed
+
+    tids = setArray(tids)
+    seeds = setArray(seeds)
     with open(outpath,'wb') as seedinfo:
         seedinfo.write('SEED')
         seedinfo.write(struct.pack('<I',len(tids)))
